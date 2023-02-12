@@ -136,10 +136,10 @@ join_DC_levels <- function(input_df,
 generate_DC_Report_percentage <- function(input_df) {
   input_df %>%
     dplyr::mutate(
-      ProteinGroup.IDs = round((.data$ProteinGroup.IDs / sum(.data$ProteinGroup.IDs)) * 100, digits = 0),
-      Protein.IDs = round((.data$Protein.IDs / sum(.data$Protein.IDs)) * 100, digits = 0),
-      Peptide.IDs = round((.data$Peptide.IDs / sum(.data$Peptide.IDs)) * 100, digits = 0),
-      Precursor.IDs = round((.data$Precursor.IDs / sum(.data$Precursor.IDs)) * 100, digits = 0)) %>%
+      ProteinGroup.IDs = round((.data$ProteinGroup.IDs / sum(.data$ProteinGroup.IDs)) * 100, digits = 2),
+      Protein.IDs = round((.data$Protein.IDs / sum(.data$Protein.IDs)) * 100, digits = 2),
+      Peptide.IDs = round((.data$Peptide.IDs / sum(.data$Peptide.IDs)) * 100, digits = 2),
+      Precursor.IDs = round((.data$Precursor.IDs / sum(.data$Precursor.IDs)) * 100, digits = 2)) %>%
     tidyr::replace_na(list(
       Precursor.IDs = 0,
       Peptide.IDs = 0,
@@ -212,8 +212,11 @@ generate_MC_Report_percentage <- function(input_df) {
 
   input_df %>%
     dplyr::mutate(
-      mc_count = round((.data$mc_count / sum(.data$mc_count)) * 100, digits = 0)
-    )
+      mc_count = round((.data$mc_count / sum(.data$mc_count)) * 100, digits = 2)
+    ) %>%
+    tidyr::replace_na(list(
+      mc_count = 0
+    ))
 }
 
 #DC - wrap_DC_barplot - get only names for plot != NULL e.g. for Spectronaut - Protein.IDs
@@ -233,7 +236,7 @@ prepare_stacked_barplot <- function(input_df,
                                     level) {
 
   input_df %>%
-    dplyr::select(.data$Analysis, contains("IDs"), .data$Profile) %>%
+    dplyr::select("Analysis", contains("IDs"), "Profile") %>%
     tidyr::pivot_longer(cols = contains("IDs"), names_to = "level", values_to = "value") %>%
     dplyr::group_by(.data$Analysis, level, .data$Profile) %>%
     dplyr::summarize(
@@ -241,7 +244,7 @@ prepare_stacked_barplot <- function(input_df,
     ) %>%
     dplyr::ungroup() %>%
     tidyr::pivot_wider(names_from = "level", values_from = "sum_level") %>%
-    dplyr::select(.data$Analysis, level, .data$Profile)
+    dplyr::select("Analysis", all_of(level), "Profile")
 }
 
 #get median ID from ID Report
@@ -252,7 +255,7 @@ get_median <- function(input_df,
     dplyr::summarize(
       median_level = round(stats::median(!!as.symbol(level)), digits = 0)
     ) %>%
-    dplyr::rename(!!as.symbol(paste0("Median ", level, " [abs.]")) := .data$median_level)
+    dplyr::rename(!!paste0("Median ", level, " [abs.]") := "median_level")
 }
 
 #get full profile from DC Report
@@ -299,13 +302,13 @@ get_CV_IDs <- function(input_df,
   if (cv_col == "CV_Peptide_LFQ_mpwR" & sum(stringr::str_detect(string = colnames(input_df), pattern = "CV_Peptide_LFQ_mpwR")) < 1) {
 
     df <- tibble::tibble(count_CV = NA) %>%
-      dplyr::rename(!!as.symbol(paste0(level, ".IDs [abs.] with a CV ", value, " < ", th_hold, " [%]")) := .data$count_CV)
+      dplyr::rename(!!paste0(level, ".IDs [abs.] with a CV ", value, " < ", th_hold, " [%]") := .data$count_CV)
 
     return(df)
   } else if (cv_col == "CV_ProteinGroup_LFQ_mpwR" & sum(stringr::str_detect(string = colnames(input_df), pattern = "CV_ProteinGroup_LFQ_mpwR")) < 1) {
 
     df <- tibble::tibble(count_CV = NA) %>%
-      dplyr::rename(!!as.symbol(paste0(level, ".IDs [abs.] with a CV ", value, " < ", th_hold, " [%]")) := .data$count_CV)
+      dplyr::rename(!!paste0(level, ".IDs [abs.] with a CV ", value, " < ", th_hold, " [%]") := .data$count_CV)
 
     return(df)
   } else {
@@ -317,7 +320,7 @@ get_CV_IDs <- function(input_df,
       dplyr::summarize(
         count_CV = n()
       ) %>%
-      dplyr::rename(!!as.symbol(paste0(level, ".IDs [abs.] with a CV ", value, " < ", th_hold, " [%]")) := .data$count_CV)
+      dplyr::rename(!!paste0(level, ".IDs [abs.] with a CV ", value, " < ", th_hold, " [%]") := .data$count_CV)
   }
 }
 
@@ -333,11 +336,11 @@ get_mc_zero <- function(input_df,
 
   input_df %>%
     dplyr::filter(.data$Missed.Cleavage == 0) %>%
-    dplyr::select(.data$mc_count) %>%
+    dplyr::select("mc_count") %>%
     dplyr::mutate(
       mc_count = as.numeric(.data$mc_count)
     ) %>%
-    dplyr::rename(!!as.symbol(paste0("Peptide IDs with zero missed cleavages ", value)) := .data$mc_count)
+    dplyr::rename(!!paste0("Peptide IDs with zero missed cleavages ", value) := "mc_count")
 
 }
 
@@ -356,7 +359,7 @@ get_summary <- function(ID_Report,
 
   #Analysis
   Analysis <- ID_Report %>%
-    dplyr::select(.data$Analysis) %>%
+    dplyr::select("Analysis") %>%
     dplyr::distinct()
 
   cbind(
@@ -382,20 +385,20 @@ get_summary_percentage <- function(input_df) { #NAs changed to 0
   . <- NULL
 
   cols <- input_df %>%
-    dplyr::select(-.data$Analysis) %>%
+    dplyr::select(-"Analysis") %>%
     colnames()
 
   input_df[, -1] %>% #mutate_if(is.character...) not possible with Analysis
     dplyr::mutate_if(is.character, as.double) %>% #MC_Report entries as character - No R/K cleavage site
     cbind("Analysis" = input_df[, 1], .) %>%
-    tidyr::pivot_longer(., cols = cols, names_to = "metric", values_to = "results") %>%
+    tidyr::pivot_longer(., cols = all_of(cols), names_to = "metric", values_to = "results") %>%
     tidyr::replace_na(list(results = 0)) %>%
     dplyr::group_by(.data$metric) %>%
     dplyr::mutate(
       results = round(.data$results / max(.data$results) * 100, digits = 0)
     ) %>%
     dplyr::ungroup() %>%
-    tidyr::pivot_wider(., id_cols = .data$Analysis, names_from = "metric", values_from = "results")
+    tidyr::pivot_wider(., id_cols = "Analysis", names_from = "metric", values_from = "results")
 }
 
 #radarchart - get values for plotting
@@ -403,7 +406,7 @@ get_summary_percentage <- function(input_df) { #NAs changed to 0
 categories <- function(input_df) {
 
   output_vec <- input_df %>%
-    dplyr::select(-.data$Analysis) %>%
+    dplyr::select(-"Analysis") %>%
     colnames()
 
   output_vec <- c(output_vec, output_vec[1])
@@ -419,7 +422,7 @@ values <- function(input_df,
   . <- NULL
 
   val <- input_df %>%
-    dplyr::select(-.data$Analysis)
+    dplyr::select(-"Analysis")
 
   val <- val[row, ] %>%
     unlist(., use.names = FALSE)
@@ -437,7 +440,7 @@ get_unique <- function(input_df,
                        level) {
   input_df %>%
     dplyr::filter(.data$Run_mpwR == run) %>%
-    dplyr::select(.data[[level]]) %>%
+    dplyr::select(all_of(level)) %>%
     dplyr::distinct()
 }
 
@@ -535,7 +538,7 @@ prepare_Upset <- function(input_df,
       n_perc = (n / max(n)) * 100 #n is count column
     ) %>%
     dplyr::filter(.data$n_perc >= percentage_runs) %>%
-    dplyr::select(.data[[level]]) %>%
+    dplyr::select(all_of(level)) %>%
     unlist(., use.names = FALSE) #require character vector for UpsetR without names for individual entries
 
   return(Appearances)

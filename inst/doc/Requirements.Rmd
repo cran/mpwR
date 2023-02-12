@@ -79,6 +79,7 @@ The following files and respective columns are required:
     * Evidence IDs
     * Potential contaminant
     * Reverse
+    * Only identified by site
     
 ## DIA-NN
 
@@ -111,23 +112,25 @@ Please enable R-friendly headers for exporting the files. The following files an
     * RT in min
 
 * PeptideGroups.txt
-    * Peptide Groups Peptide Group ID
+    * Number of Protein Groups
+    * Number of Proteins 
+    * Number of PSMs
     * Confidence
     * Sequence
     * Modifications
     * Number of Missed Cleavages
-    * Found in Sample column(s)
+    * Found in Sample column(s) (Required: Data Distributions node in the consensus workflow; set Show Found in Samples parameter to True)
 
 * Proteins.txt
     * Proteins Unique Sequence ID
     * Protein FDR Confidence Combined
     * Accession
     * Description
-    * Found in Sample column(s)
+    * Found in Sample column(s) (Required: Data Distributions node in the consensus workflow; set Show Found in Samples parameter to True)
 
 * ProteinGroups.txt
     * Protein Groups Protein Group ID
     * Group Description
     * Number of Proteins
     * Number of Unique Peptides
-    * Found in Sample column(s)
+    * Found in Sample column(s) (Required: Data Distributions node in the consensus workflow; set Show Found in Samples parameter to True)

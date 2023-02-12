@@ -46,7 +46,7 @@ viz_DC_barplot <- function(input_df,
   } else {
 
     input_df <- input_df %>%
-      dplyr::select(.data$Nr.Missing.Values, level)
+      dplyr::select("Nr.Missing.Values", any_of(level))
 
     if (label == "absolute") {
       name_yaxes <- "Nr. of affected profiles [abs.]\n"
@@ -64,7 +64,7 @@ viz_DC_barplot <- function(input_df,
       ggplot2::theme(axis.line = ggplot2::element_line(color = "black", size = 0.5, linetype = "solid")) +
       ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, ylimit)) +
       ggplot2::scale_x_continuous(breaks = seq(from = 0, to = nrow(input_df), by = 1)) +
-      ggplot2::geom_text(ggplot2::aes(y = input_df[, 2], label = input_df[, 2]), vjust = -0.5, color = "black", size = 3) +
+      ggplot2::geom_text(ggplot2::aes(y = input_df[, 2], label = round(input_df[, 2], digits = 0)), vjust = -0.5, color = "black", size = 3) +
       ggplot2::theme_bw()
 
   }
@@ -91,7 +91,11 @@ viz_DC_stacked_barplot <- function(input_df,
     #color scheme
     unique_Profile <- length(unique(input_df$Profile))
 
-    if (unique_Profile < 4) {
+    if (unique_Profile < 3) {
+
+      color_palette_dc <- c("#CA0020", "#404040") #red to grey
+
+    } else if (unique_Profile == 3) {
 
       color_palette_dc <- c("#CA0020", "#F7E2A6", "#404040") #red to grey
 
@@ -105,13 +109,13 @@ viz_DC_stacked_barplot <- function(input_df,
       dplyr::summarize(Sum_Level = sum(.data[[!!level]])) %>%
       dplyr::ungroup()
 
-    xlimit <- max(xlimit[, 2]) + (max(xlimit[, 2]) * 0.1)
-
     #x axes name - appendix
     if (label == "absolute") {
       name_xaxes <- paste0(level, " [abs.]")
+      xlimit <- max(xlimit[, 2]) + (max(xlimit[, 2]) * 0.1)
     } else if (label == "percentage") {
       name_xaxes <- paste0(level, " [%]")
+      xlimit <- 101
     }
 
     #add text for labelling
@@ -160,7 +164,7 @@ viz_ID_barplot <- function(input_df,
   } else {
 
     input_df <- input_df %>%
-      dplyr::select(.data$Run, all_of(level))
+      dplyr::select("Run", all_of(level))
 
     name_xaxes <- paste(level, " [abs.]\n")
     xlimit <- max(input_df[, 2]) + (max(input_df[, 2]) * 0.1)
@@ -193,13 +197,13 @@ viz_ID_boxplot <- function(input_df,
   } else {
 
     input_df <- input_df %>%
-      dplyr::select(.data$Analysis, all_of(level))
+      dplyr::select("Analysis", all_of(level))
 
     name_yaxes <- paste(level, " [abs.]\n")
     xlimit <- max(input_df[, 2]) + (max(input_df[, 2]) * 0.1)
 
     analysis_levels <- input_df %>%
-      dplyr::select(.data$Analysis) %>%
+      dplyr::select("Analysis") %>%
       dplyr::arrange(.data$Analysis) %>%
       dplyr::distinct() %>%
       unlist(., use.names = FALSE)
@@ -208,6 +212,7 @@ viz_ID_boxplot <- function(input_df,
       dplyr::mutate(Analysis = factor(.data$Analysis, levels = analysis_levels)) %>%
       ggplot2::ggplot(ggplot2::aes(x = forcats::fct_rev(.data$Analysis), y = input_df[, 2])) +
       ggplot2::geom_boxplot(fill = "grey", show.legend = FALSE, width = 0.6, lwd = 1.05) +
+      ggplot2::geom_jitter() +
       ggplot2::labs(y = name_yaxes,
            x = "Analysis \n") +
       ggplot2::coord_flip() +
@@ -226,7 +231,7 @@ viz_MC_barplot <- function(input_df,
   input_df$mc_count <- as.numeric(input_df$mc_count)
 
   input_df <- input_df %>%
-    dplyr::select(.data$Missed.Cleavage, .data$mc_count)
+    dplyr::select("Missed.Cleavage", "mc_count")
 
   if (label == "absolute") {
     name_yaxes <- "Nr. of Peptide.IDs [abs.]\n"
@@ -246,7 +251,7 @@ viz_MC_barplot <- function(input_df,
          x = name_xaxes) +
     ggplot2::theme(axis.line = ggplot2::element_line(color = "black", size = 0.5, linetype = "solid")) +
     ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, ylimit)) +
-    ggplot2::geom_text(ggplot2::aes(y = input_df[, 2], label = input_df[, 2]), vjust = -0.5, color = "black", size = 3) +
+    ggplot2::geom_text(ggplot2::aes(y = input_df[, 2], label = round(input_df[, 2], digits = 0)), vjust = -0.5, color = "black", size = 3) +
     ggplot2::theme_bw()
 }
 
@@ -263,7 +268,9 @@ viz_MC_stacked_barplot <- function(input_df,
   unique_profile <- length(unique(input_df$Missed.Cleavage))
 
   #color scheme
-  if (unique_profile < 4) {
+  if (unique_profile < 3) {
+    color_palette_mc <- c("#A6611A", "#018571")
+  } else if (unique_profile == 3) {
     color_palette_mc <- c("#A6611A", "#BAB8B8", "#018571")
   } else if (unique_profile == 4) {
     color_palette_mc <- c("#A6611A", "#BAB8B8", "#80CDC1", "#018571")
@@ -277,15 +284,15 @@ viz_MC_stacked_barplot <- function(input_df,
     dplyr::summarize(
       Sum_Level = sum(.data$mc_count)
     )
-  xlimit <- max(xlimit[, 2]) + (max(xlimit[, 2]) * 0.1)
 
   name_xaxes <- "Peptide IDs"
 
   if (label == "absolute") {
     name_xaxes <- paste0(name_xaxes, " [abs.]")
-
+    xlimit <- max(xlimit[, 2]) + (max(xlimit[, 2]) * 0.1)
   } else if (label == "percentage") {
     name_xaxes <- paste0(name_xaxes, " [%]")
+    xlimit <- 101
   }
 
 
@@ -309,7 +316,7 @@ viz_MC_stacked_barplot <- function(input_df,
   input_df$Analysis <-  forcats::fct_rev(input_df$Analysis)
 
   input_df <- input_df %>%
-    dplyr::rename("Peptide_count" = .data$mc_count)
+    dplyr::rename("Peptide_count" = "mc_count")
 
   #plot
   input_df %>%

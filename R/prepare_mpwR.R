@@ -2,7 +2,7 @@
 #'
 #' Input data will be imported, renamed and default filtering will be applied
 #'
-#' Function for easily importing software imports and preparing for downstream analysis with mpwR. As default for MaxQuant "Reverse" and "Potential Contaminants" are filtered out. As default for PD only "High" confidence identifications are included. As default for Spectronaut only EG.Identified equals TRUE are included.
+#' Function for easily importing software outputs and preparing for downstream analysis with mpwR. As default for MaxQuant "Reverse", "Potential contaminants" and "Only identified by site" are filtered out. As default for PD only "High" confidence identifications are included and for Found in Sample column(s) also only "High" identifications. Contaminants are filtered out. As default for Spectronaut only EG.Identified equals TRUE are included.
 #'
 #' @param path Path to folder where the input data is stored - only input data. No subfolders or other files. Analysis name as prefix + for MaxQuant: _evidence, _peptides, _proteinGroups; for PD - R-friendly headers enabled: _PSMs, _Proteins, _PeptideGroups, _ProteinGroups; for DIA-NN and Spectronaut: _Report
 #' @author Oliver Kardell
@@ -32,7 +32,7 @@ prepare_mpwR <- function(path) {
     `DIA-NN` = c("File.Name", "Run", "Protein.Group", "Protein.Ids"),
     Spectronaut = c("R.FileName", "PG.ProteinGroups", "EG.PrecursorId"),
     PD_psm = c("Confidence", "Spectrum File", "Annotated Sequence", "Modifications", "Number of Missed Cleavages", "Charge", "RT in min"),  #Apex RT in min
-    PD_pep = c("Peptide Groups Peptide Group ID", "Confidence", "Sequence", "Modifications", "Number of Missed Cleavages"), #Annotated Sequence
+    PD_pep = c("Number of Protein Groups", "Number of Proteins", "Number of PSMs", "Confidence", "Sequence", "Modifications", "Number of Missed Cleavages"), #Annotated Sequence
     PD_prot = c("Proteins Unique Sequence ID", "Accession", "Description"), #Modifications
     PD_pg =  c("Protein Groups Protein Group ID", "Group Description", "Number of Proteins", "Number of Unique Peptides")
   )

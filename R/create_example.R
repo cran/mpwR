@@ -52,6 +52,7 @@ create_example <- function() {
           "Peptide counts (all)" = c(1, 2, 2, 3, 3),
           "Potential contaminant" = rep(c(""), times = 5),
           "Reverse" = rep(c(""), times = 5),
+          "Only identified by site" = rep(c(""), times = 5),
           "Intensity R01" = c(4, 4, 3.9, 5, 6),
           "Intensity R02" = c(3, 3.5, 4, 5, 6),
           "LFQ intensity R01" = c(4, 4, 5, 5, 6),
@@ -110,8 +111,10 @@ create_example <- function() {
           `RT in min` = sample_replicates(c(44, 34, 43, 38, 37, 42, 45))
         ),
         "pep" = tibble::tibble(
-          `Peptide Groups Peptide Group ID` = c(1, 2, 3, 4, 5),
-          Confidence = rep("High", times = 5),
+           Confidence = rep("High", times = 5),
+          `Number of Protein Groups` = c(1, 1, 1, 1, 1),
+          `Number of Proteins`= c(1, 1, 1, 1, 1),
+          `Number of PSMs`= c(1, 1, 1, 1, 1),
           `Sequence` = sample(c("AADDTWEPFASGK", "DGWQWFWSPSTFR", "AACLLPK", "GLEWVGR", "DFTFDLYR", "DYELLCLDGTRKPVEEYANCHLAR", "LVRPEVDVMCTAFHDNEETFLK"), 5),
           Modifications = sample(c("", "", "C3(Dummy_Modification)", "", "", "C6(Carbamidomethyl); C20(Carbamidomethyl)", "M9(Oxidation); C10(Carbamidomethyl)"), 5),
           `Number of Missed Cleavages` = sample(c(0, 0, 2, 1, 2, 1, 3), 5),

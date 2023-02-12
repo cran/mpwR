@@ -7,6 +7,11 @@ import_mpwR <- function(input_file, ...) {
 
 }
 
+#change integer64
+is.integer64 <- function(x) {
+  inherits(x, "integer64")
+}
+
 # Prepare the input data
 # Input data will be renamed and default filtering will be applied
 # Default filtering- MaxQuant: no potential contaminants and no reverse sequences; DIA-NN: none; Spectronaut: EG.Identified only TRUE; PD: Only High Confidence identifications
@@ -30,14 +35,14 @@ prepare_input <- function(input_df,
 
   cols_MQ_ev <- c("Raw file", "Proteins", "Modified sequence", "Sequence", "Missed cleavages", "Charge", "Retention time", "Potential contaminant", "Reverse")
   cols_MQ_pep <- c("Sequence", "Missed cleavages", "Last amino acid", "Amino acid after", "Potential contaminant", "Reverse") #"Last amino acid" and "amino acid after" to clearly identify data as peptide.txt - currently not used for downstream analysis #requires intensity columns for tidying #requires LFQ intensity for CV LFQ calc
-  cols_MQ_pg <- c("Protein IDs", "Majority protein IDs", "Peptide counts (all)", "Potential contaminant", "Reverse") #"Majority protein IDs" and "Peptide counts (all)" to clearly identify peptideGroups.txt - currently not used for downstream analysis #requires intensity columns for tidying #requires LFQ intensity for CV LFQ calc
+  cols_MQ_pg <- c("Protein IDs", "Majority protein IDs", "Peptide counts (all)", "Potential contaminant", "Reverse", "Only identified by site") #"Majority protein IDs" and "Peptide counts (all)" to clearly identify peptideGroups.txt - currently not used for downstream analysis #requires intensity columns for tidying #requires LFQ intensity for CV LFQ calc
 
   cols_DIANN <- c("Run", "Protein.Group", "Protein.Ids", "Modified.Sequence", "Stripped.Sequence", "Precursor.Id", "Precursor.Charge", "RT", "PG.MaxLFQ")
 
   cols_spec <- c("R.FileName", "PG.ProteinGroups", "PEP.StrippedSequence", "EG.ModifiedPeptide", "EG.PrecursorId", "EG.Identified", "EG.ApexRT", "FG.Charge", "PG.Quantity", "PEP.Quantity", "PEP.NrOfMissedCleavages") # currently not used: PEP.IsProteotypic, EG.IsDecoy
 
   cols_PD_psm <- c("Confidence", "Spectrum File", "Protein Accessions", "Annotated Sequence", "Modifications", "Number of Missed Cleavages", "Charge", "RT in min") # currently not used Apex RT in min
-  cols_PD_pep <- c("Peptide Groups Peptide Group ID", "Confidence", "Sequence", "Modifications", "Number of Missed Cleavages") # also contains(Found in Sample) #currently not used Annotated Sequence #"Peptide Groups Peptide Group" ID to clearly identify peptideGroups.txt - not used for downstream analysis
+  cols_PD_pep <- c("Number of Protein Groups", "Number of Proteins", "Number of PSMs", "Confidence", "Sequence", "Modifications", "Number of Missed Cleavages") # also contains(Found in Sample) #currently not used Annotated Sequence #"Number of Protein Groups", "Number of Proteins", "Number of PSMs" to clearly identify peptideGroups.txt - not used for downstream analysis
   cols_PD_prot <- c("Proteins Unique Sequence ID", "Accession", "Description") # also contains(Found in Sample) #"Proteins Unique Sequence ID" and "Description" to cleary identify Proteins.txt - not used for downstream analysis
   cols_PD_pg <- c("Protein Groups Protein Group ID", "Group Description", "Number of Proteins", "Number of Unique Peptides") # also contains(Found in Sample) #"Protein Groups Protein Group ID","Number of Proteins", "Number of Unique Peptides" to clearly identify ProteinGroups.txt - not used for downstream analysis
   #***************
@@ -60,6 +65,21 @@ prepare_input <- function(input_df,
       }
       #**
 
+      #switch from logical to character, if empty column
+      input_df$`Potential contaminant` <- as.character(input_df$`Potential contaminant`)
+      input_df$Reverse <- as.character(input_df$Reverse)
+      #
+
+      #replace_na - if column has no "+" - only NA entries, filtering does not work
+      input_df <- input_df %>%
+        tidyr::replace_na(
+          list(
+            `Potential contaminant` = "",
+            Reverse = ""
+          )
+        )
+      #
+
       output_df <- input_df %>%
         dplyr::filter(.data$`Potential contaminant` != "+", .data$Reverse != "+") %>%
         dplyr::mutate("Run_mpwR" = .data$`Raw file`,
@@ -70,7 +90,8 @@ prepare_input <- function(input_df,
                       "Retention.time_mpwR" = .data$`Retention time`,
                       "Precursor.Charge_mpwR" = .data$Charge) %>%
         dplyr::filter(.data$Peptide.IDs_mpwR != "") %>%
-        tidyr::unite(., col = "Precursor.IDs_mpwR", c("Peptide.IDs_mpwR", "Precursor.Charge_mpwR"), sep = "", remove = FALSE)
+        tidyr::unite(., col = "Precursor.IDs_mpwR", c("Peptide.IDs_mpwR", "Precursor.Charge_mpwR"), sep = "", remove = FALSE) %>%
+        dplyr::mutate_if(is.integer64, as.double)
 
 
     } else if (MaxQuant_addon == "peptide") {
@@ -81,6 +102,21 @@ prepare_input <- function(input_df,
         stop("Not all required columns present in submitted data.")
       }
       #**
+
+      #switch from logical to character, if empty column
+      input_df$`Potential contaminant` <- as.character(input_df$`Potential contaminant`)
+      input_df$Reverse <- as.character(input_df$Reverse)
+      #
+
+      #replace_na - if column has no "+" - only NA entries, filtering does not work
+      input_df <- input_df %>%
+        tidyr::replace_na(
+          list(
+            `Potential contaminant` = "",
+            Reverse = ""
+          )
+        )
+      #
 
       output_df <- input_df %>%
         dplyr::filter(.data$`Potential contaminant` != "+", .data$Reverse != "+") %>%
@@ -99,9 +135,27 @@ prepare_input <- function(input_df,
       }
       #**
 
+      #switch from logical to character, if empty column
+      input_df$`Potential contaminant` <- as.character(input_df$`Potential contaminant`)
+      input_df$Reverse <- as.character(input_df$Reverse)
+      input_df$`Only identified by site` <- as.character(input_df$`Only identified by site`)
+      #
+
+      #replace_na - if column has no "+" - only NA entries, filtering does not work
+      input_df <- input_df %>%
+        tidyr::replace_na(
+          list(
+            `Potential contaminant` = "",
+            Reverse = "",
+            `Only identified by site` = ""
+          )
+        )
+      #
+
       output_df <- input_df %>%
-        dplyr::filter(.data$`Potential contaminant` != "+", .data$Reverse != "+") %>%
-        dplyr::mutate("ProteinGroup.IDs_mpwR" = .data$`Protein IDs`)
+        dplyr::filter(.data$`Potential contaminant` != "+", .data$Reverse != "+", .data$`Only identified by site` != "+") %>%
+        dplyr::mutate("ProteinGroup.IDs_mpwR" = .data$`Protein IDs`) %>%
+        dplyr::mutate_if(is.integer64, as.double)
 
     }
 
@@ -148,7 +202,8 @@ prepare_input <- function(input_df,
                     "Missed.Cleavage_mpwR" = .data$PEP.NrOfMissedCleavages,
                     "Retention.time_mpwR" = .data$EG.ApexRT,
                     "ProteinGroup_LFQ_mpwR" = .data$PG.Quantity, #not not necessarily LFQ quantity - depends on analysis settings in spectronaut
-                    "Peptide_LFQ_mpwR" = .data$PEP.Quantity) #not necessarily LFQ quantity - depends on analysis settings in spectronaut
+                    "Peptide_LFQ_mpwR" = .data$PEP.Quantity) %>% #not necessarily LFQ quantity - depends on analysis settings in spectronaut
+      dplyr::mutate_if(is.integer64, as.double)
 
   } else if (software == "PD") {
 
@@ -177,8 +232,14 @@ prepare_input <- function(input_df,
                       "Missed.Cleavage_mpwR" = .data$`Number of Missed Cleavages`,
                       "Precursor.Charge_mpwR" = .data$Charge,
                       "Retention.time_mpwR" = .data$`RT in min`) %>%
-        tidyr::unite(., col = "Precursor.IDs_mpwR", c("Peptide.IDs_mpwR", "Precursor.Charge_mpwR"), sep = "", remove = FALSE)
+        tidyr::unite(., col = "Precursor.IDs_mpwR", c("Peptide.IDs_mpwR", "Precursor.Charge_mpwR"), sep = "", remove = FALSE) %>%
+        dplyr::mutate_if(is.integer64, as.double)
 
+      #If contaminant column is present
+      if (sum(stringr::str_detect(colnames(input_df), pattern = "Contaminant")) > 0) {
+        output_df <- output_df %>%
+          filter(.data$Contaminant == FALSE)
+      }
 
     } else if (PD_addon == "peptide") {
 
@@ -199,8 +260,14 @@ prepare_input <- function(input_df,
           "Missed.Cleavage_mpwR" = .data$`Number of Missed Cleavages`
         ) %>%
         tidyr::pivot_longer(cols = contains("Found in Sample"), names_to = "Run_mpwR", values_to = "Found.in.Sample_values_mpwR") %>% #tidy #Run needed for ID_Report - generate_level_count
-        dplyr::filter(.data$Found.in.Sample_values_mpwR == "High") #"Not Found" - "Peak Found" - "Medium" - "Low"
+        dplyr::filter(.data$Found.in.Sample_values_mpwR == "High") %>% #"Not Found" - "Peak Found" - "Medium" - "Low"
+        dplyr::mutate_if(is.integer64, as.double)
 
+      #If contaminant column is present
+      if (sum(stringr::str_detect(colnames(input_df), pattern = "Contaminant")) > 0) {
+        output_df <- output_df %>%
+          filter(.data$Contaminant == FALSE)
+      }
 
     } else if (PD_addon == "protein") {
 
@@ -218,7 +285,14 @@ prepare_input <- function(input_df,
         dplyr::mutate(
           "Protein.IDs_mpwR" = .data$Accession) %>%
         tidyr::pivot_longer(cols = contains("Found in Sample"), names_to = "Run_mpwR", values_to = "Found.in.Sample_values_mpwR") %>% #tidy #Run needed for ID_Report - generate_level_count
-        dplyr::filter(.data$Found.in.Sample_values_mpwR == "High") #"Not Found" - "Peak Found" - "Medium" - "Low"
+        dplyr::filter(.data$Found.in.Sample_values_mpwR == "High") %>% #"Not Found" - "Peak Found" - "Medium" - "Low"
+        dplyr::mutate_if(is.integer64, as.double)
+
+      #If contaminant column is present
+      if (sum(stringr::str_detect(colnames(input_df), pattern = "Contaminant")) > 0) {
+        output_df <- output_df %>%
+          filter(.data$Contaminant == FALSE)
+      }
 
     } else if (PD_addon == "proteingroup") {
 
@@ -233,10 +307,18 @@ prepare_input <- function(input_df,
 
       output_df <- input_df %>%
         dplyr::rename(
-          "ProteinGroup.IDs_mpwR" = .data$`Protein Groups Protein Group ID`) %>% #, #only number! - PD Manual page 306
+          "ProteinGroup.IDs_mpwR" = "Protein Groups Protein Group ID") %>% #, #only number! - PD Manual page 306
         tidyr::pivot_longer(cols = contains("Found in Sample"), names_to = "Run_mpwR", values_to = "Found.in.Sample_values_mpwR") %>% #tidy #Run needed for ID_Report - generate_level_count
-        dplyr::filter(.data$Found.in.Sample_values_mpwR == "High") #"Not Found" - "Peak Found" - "Medium" - "Low"
+        dplyr::filter(.data$Found.in.Sample_values_mpwR == "High") %>% #"Not Found" - "Peak Found" - "Medium" - "Low"
+        dplyr::mutate_if(is.integer64, as.double)
     }
+
+    #If contaminant column is present
+    if (sum(stringr::str_detect(colnames(input_df), pattern = "Contaminant")) > 0) {
+      output_df <- output_df %>%
+        filter(.data$Contaminant == FALSE)
+    }
+
   }
   return(output_df)
 }
