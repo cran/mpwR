@@ -1,3 +1,11 @@
+# mpwR 0.1.3
+
+* Added article "Output Explanations" to package website
+* Added article "Use case - Round robin study" to package website
+* Added article "Use case - Software comparison" to package website
+* Added generic input option
+* Added function to write template for generic input
+
 # mpwR 0.1.2
 
 ## Minor changes
@@ -21,3 +29,4 @@
 * First release version.
 
 
+ 
