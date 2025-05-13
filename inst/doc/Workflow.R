@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -16,7 +16,7 @@ library(ggplot2)
 library(flextable)
 
 ## ----import, eval = FALSE-----------------------------------------------------
-#  files <- prepare_mpwR(path = "Path_to_Folder_with_files")
+# files <- prepare_mpwR(path = "Path_to_Folder_with_files")
 
 ## ----get-example-data---------------------------------------------------------
 files <- create_example()
@@ -113,14 +113,14 @@ get_Upset_list(input_list = files, level = "Peptide.IDs", flowTraceR = TRUE) %>%
   plot_Upset(label = "Peptide.IDs") #plot
 
 ## ----summary-report, eval = FALSE---------------------------------------------
-#  Summary_Report <- get_summary_Report(input_list = files)
+# Summary_Report <- get_summary_Report(input_list = files)
 
 ## ----plot-radarchart, eval = FALSE--------------------------------------------
-#  plot_radarchart(input_df = Summary_Report)
+# plot_radarchart(input_df = Summary_Report)
 
 ## ----plot-radarchart-DC, eval = FALSE-----------------------------------------
-#  #Focus on Data Completeness
-#  Summary_Report %>%
-#    dplyr::select(Analysis, contains("Full")) %>% #Analysis column and at least one category column is required
-#    plot_radarchart()
+# #Focus on Data Completeness
+# Summary_Report %>%
+#   dplyr::select(Analysis, contains("Full")) %>% #Analysis column and at least one category column is required
+#   plot_radarchart()
 
